@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
+import com.scittech.city.keycloakmicroservice.entities.UserTokenCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
+import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
 import com.scittech.city.keycloakmicroservice.utils.ErrorResponse;
 
 @RestController
@@ -24,6 +26,8 @@ public class KeycloakController {
 
     @Autowired
     private LogInUserService logInUserService;
+    @Autowired
+    private LogoutUserService logOutUserService;
 
     @GetMapping("/signup")
     public String createUser() {
@@ -68,8 +72,25 @@ public class KeycloakController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> destroyToken() {
-        return new ResponseEntity<>("logout", HttpStatus.OK);
+    public ResponseEntity<?> destroyToken(@RequestBody UserTokenCredentialsEntity access_token) {
+        try {
+            ResponseEntity<String> authenticationResponse = logOutUserService.logOutRequest(access_token.getAccess_token());
+            if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
+                String token = authenticationResponse.getBody();
+                return new ResponseEntity<>(token, HttpStatus.OK);
+            } else {
+                // Handle other responses if needed
+                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+                ErrorResponse error = new ErrorResponse(
+                    OffsetDateTime.now(),
+                    e.getStatusCode().toString(),
+                    "Unexpected error occurred",
+                    "/api/keycloak-service/logout"
+                );
+                return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        }
     }
 
 }
