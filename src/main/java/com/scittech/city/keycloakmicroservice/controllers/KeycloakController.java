@@ -1,5 +1,7 @@
 package com.scittech.city.keycloakmicroservice.controllers;
 
+import java.time.OffsetDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,41 +11,65 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
-
+import com.scittech.city.keycloakmicroservice.utils.ErrorResponse;
 
 @RestController
 @RequestMapping(value = "/api/keycloak-service")
 @CrossOrigin(origins = "*")
 public class KeycloakController {
-    
 
     @Autowired
     private LogInUserService logInUserService;
 
     @GetMapping("/signup")
-    public String createUser(){
+    public String createUser() {
         return "user";
-    } 
+    }
 
     @PostMapping("/signin")
-    public ResponseEntity<String> getToken(@RequestBody UserLoginCredentialsEntity userLoginCredentials){
+    public ResponseEntity<?> getToken(@RequestBody UserLoginCredentialsEntity userLoginCredentials) {
         String username = userLoginCredentials.getUsername();
         String password = userLoginCredentials.getPassword();
-        logInUserService.loginUserRequest(username, password);
-        return new ResponseEntity <>("token", HttpStatus.OK);
-    } 
-    
-    @PostMapping("/spect-token")
-    public ResponseEntity<String> spectToken(){
-        return new ResponseEntity <>("spect-token", HttpStatus.OK);
+        try {
+            ResponseEntity<String> authenticationResponse = logInUserService.loginUserRequest(username, password);
+
+            if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
+                String token = authenticationResponse.getBody();
+                return new ResponseEntity<>(token, HttpStatus.OK);
+            } else {
+                // Handle other responses if needed
+                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                // Handle 401 Unauthorized response here
+                ErrorResponse error = new ErrorResponse(
+                    OffsetDateTime.now(),
+                    HttpStatus.UNAUTHORIZED.toString(),
+                    "Unauthorized",
+                    "/api/keycloak-service/signin"
+                );
+                return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+            } else {
+                // Handle other exceptions or return an appropriate response
+                return new ResponseEntity<>("Unexpected error occurred", e.getStatusCode());
+                // return new ResponseEntity<>("Unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
     }
-    
+
+    @PostMapping("/spect-token")
+    public ResponseEntity<?> spectToken() {
+        return new ResponseEntity<>("spect-token", HttpStatus.OK);
+    }
+
     @PostMapping("/logout")
-    public ResponseEntity<String> destroyToken(){
-        return new ResponseEntity <>("logout", HttpStatus.OK);
-    } 
+    public ResponseEntity<?> destroyToken() {
+        return new ResponseEntity<>("logout", HttpStatus.OK);
+    }
 
 }

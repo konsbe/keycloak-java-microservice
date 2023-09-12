@@ -24,15 +24,15 @@ public class LoginUserServiceImpl implements LogInUserService {
     @Override
     public ResponseEntity<String> loginUserRequest(String username,String password) {
         // Define the request URL
-        String url = "http://16.170.228.185/realms/APESFormBuilder/protocol/openid-connect/token";
+        String url = "http://67.202.48.180:8080/realms/sci-tech/protocol/openid-connect/token";
 
         // Create a MultiValueMap to hold the form data
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", "apes-id");
-        formData.add("client_secret", "kASO4tS5r9RfnJ3JGUsZbu2uq9Wz6aU4");
+        formData.add("client_id", "sci-tech.city");
+        formData.add("client_secret", "Sx41lvm2LWQG0edBR81rOlWm5UiqtDjJ");
         formData.add("grant_type", "password");
-        formData.add("username", "adminuser@email.com");
-        formData.add("password", "password");
+        formData.add("username", username.toString());
+        formData.add("password", password.toString());
 
         // Create headers
         HttpHeaders headers = new HttpHeaders();
