@@ -1,6 +1,7 @@
 package com.scittech.city.keycloakmicroservice.services.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,6 +18,8 @@ import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
 public class LogoutUserServiceImpl implements LogoutUserService {
     @Autowired
     private final RestTemplate restTemplate;
+    @Autowired
+    private Environment environment;
 
     public LogoutUserServiceImpl(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -25,12 +28,12 @@ public class LogoutUserServiceImpl implements LogoutUserService {
     @Override
     public ResponseEntity<String> logOutRequest(String userToken) {
         // Define the request URL
-        String url = "http://67.202.48.180:8080/realms/sci-tech/protocol/openid-connect/logout";
+        String url = environment.getProperty("keycloak.server") + "/protocol/openid-connect/logout";
 
         // Create a MultiValueMap to hold the form data
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", "sci-tech.city");
-        formData.add("client_secret", "Sx41lvm2LWQG0edBR81rOlWm5UiqtDjJ");
+        formData.add("client_id", environment.getProperty("keyclokk.client_id"));
+        formData.add("client_secret", environment.getProperty("keycloak.client_secret"));
         formData.add("access_token", userToken);
 
         // Create headers

@@ -11,43 +11,36 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import com.scittech.city.keycloakmicroservice.services.LogInUserService;
+import com.scittech.city.keycloakmicroservice.services.InspectTokenService;
 
 @Service
-public class LoginUserServiceImpl implements LogInUserService {
+public class InspectTokenServiceImpl implements InspectTokenService {
+
     @Autowired
     private final RestTemplate restTemplate;
     @Autowired
     private Environment environment;
-    
-    public LoginUserServiceImpl(RestTemplate restTemplate) {
+
+    public InspectTokenServiceImpl(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     @Override
-    public ResponseEntity<String> loginUserRequest(String username,String password) {
-        // Define the request URL
-        String url = environment.getProperty("keycloak.server").toString() + "/protocol/openid-connect/token";
+    public ResponseEntity<String> inspectToken(String userToken) {
 
-        // Create a MultiValueMap to hold the form data
+        String url = environment.getProperty("keycloak.server") + "/protocol/openid-connect/token/introspect";
+
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", environment.getProperty("keycloak.client_id").toString());
-        formData.add("client_secret", environment.getProperty("keycloak.client_secret").toString());
-        formData.add("grant_type", "password");
-        formData.add("username", username.toString());
-        formData.add("password", password.toString());
+        formData.add("client_id", environment.getProperty("keycloak.client_id"));
+        formData.add("client_secret", environment.getProperty("keycloak.client_secret"));
+        formData.add("token", userToken);
 
-        // Create headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        // Create a request entity with form data and headers
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(formData, headers);
 
-        // Make the POST request and get the response
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, requestEntity, String.class);
-
         return responseEntity;
     }
-
+    
 }
