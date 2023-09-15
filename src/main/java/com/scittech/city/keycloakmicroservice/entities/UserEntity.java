@@ -20,6 +20,7 @@ public class UserEntity {
     private Access access;
     private List<String> realmRoles;
     private List<String> groups;
+    private boolean enabled;
 }
 
 @Getter
