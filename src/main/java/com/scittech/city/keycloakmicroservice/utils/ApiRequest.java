@@ -1,7 +1,5 @@
 package com.scittech.city.keycloakmicroservice.utils;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import lombok.AllArgsConstructor;
 
