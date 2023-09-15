@@ -28,7 +28,7 @@ public class LogoutUserServiceImpl implements LogoutUserService {
     @Override
     public ResponseEntity<String> logOutRequest(String userToken) {
         // Define the request URL
-        String url = environment.getProperty("keycloak.server") + "/protocol/openid-connect/logout";
+        String url = environment.getProperty("keycloak.server.url") + "/protocol/openid-connect/logout";
 
         // Create a MultiValueMap to hold the form data
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();

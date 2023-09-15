@@ -28,7 +28,7 @@ public class InspectTokenServiceImpl implements InspectTokenService {
     @Override
     public ResponseEntity<String> inspectToken(String userToken) {
 
-        String url = environment.getProperty("keycloak.server") + "/protocol/openid-connect/token/introspect";
+        String url = environment.getProperty("keycloak.server.url") + "/protocol/openid-connect/token/introspect";
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("client_id", environment.getProperty("keycloak.client_id"));
