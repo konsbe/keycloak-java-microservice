@@ -3,6 +3,7 @@ package com.scittech.city.keycloakmicroservice.controllers;
 import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -23,6 +24,7 @@ import com.scittech.city.keycloakmicroservice.services.LogInUserService;
 import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
 import com.scittech.city.keycloakmicroservice.services.SignupUserService;
 import com.scittech.city.keycloakmicroservice.utils.ErrorResponse;
+import com.scittech.city.keycloakmicroservice.utils.ObjectKey;
 
 @RestController
 @RequestMapping(value = "/api/keycloak-service")
@@ -37,6 +39,10 @@ public class KeycloakController {
     private InspectTokenService inspectTokenService;
     @Autowired
     private SignupUserService signupUserService; 
+    @Autowired
+    private Environment environment;
+    @Autowired
+    private ObjectKey objectKey;
 
     @PostMapping("/signup")
     public ResponseEntity<?> createUser(@RequestBody UserEntity userData) {
@@ -52,15 +58,7 @@ public class KeycloakController {
         } catch (HttpClientErrorException e) {
                 String responseBody = e.getResponseBodyAsString();
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode jsonNode;
-                String errorDescription;
-                try {
-                    jsonNode = objectMapper.readTree(responseBody);
-                    errorDescription = jsonNode.get("error_description").asText();
-                } catch (JsonProcessingException e1) {
-                    errorDescription = "Unexpected error occurred"; 
-                }
+                String errorDescription = objectKey.getKey(responseBody, "error_description")
 
                 ErrorResponse error = new ErrorResponse(
                     OffsetDateTime.now(),
@@ -118,15 +116,7 @@ public class KeycloakController {
         } catch (HttpClientErrorException e) {
                 String responseBody = e.getResponseBodyAsString();
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode jsonNode;
-                String errorDescription;
-                try {
-                    jsonNode = objectMapper.readTree(responseBody);
-                    errorDescription = jsonNode.get("error_description").asText();
-                } catch (JsonProcessingException e1) {
-                    errorDescription = "Unexpected error occurred"; 
-                }
+                String errorDescription = objectKey.getKey(responseBody, "error_description")
 
                 ErrorResponse error = new ErrorResponse(
                     OffsetDateTime.now(),
@@ -140,8 +130,9 @@ public class KeycloakController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> destroyToken(@RequestBody UserTokenCredentialsEntity access_token) {
+        String client_id = environment.getProperty("keycloak.client_id").toString();
         try {
-            ResponseEntity<String> authenticationResponse = logOutUserService.logOutRequest(access_token.getAccess_token());
+            ResponseEntity<String> authenticationResponse = logOutUserService.logOutRequest(access_token.getAccess_token(), client_id);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 String token = authenticationResponse.getBody();
                 return new ResponseEntity<>(token, HttpStatus.OK);

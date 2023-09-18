@@ -1,7 +1,5 @@
 package com.scittech.city.keycloakmicroservice.entities;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -16,6 +14,7 @@ public class UserEntity {
     private String firstName;
     private String lastName;
     private String username;
+    private boolean emailVerified;
     private List<?> credentials;
     private Access access;
     private List<String> realmRoles;

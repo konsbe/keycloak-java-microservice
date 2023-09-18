@@ -10,19 +10,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
 import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
 import com.scittech.city.keycloakmicroservice.services.SignupUserService;
 import com.scittech.city.keycloakmicroservice.utils.ErrorResponse;
+import com.scittech.city.keycloakmicroservice.utils.ObjectKey;
 
 @Service
 public class SignupUserServiceImpl implements SignupUserService {
@@ -35,6 +32,8 @@ public class SignupUserServiceImpl implements SignupUserService {
     private LogInUserService loginUserService;
     @Autowired
     private LogoutUserService logoutUserService;
+    @Autowired
+    private ObjectKey objectKey;
 
     public SignupUserServiceImpl(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -46,22 +45,15 @@ public class SignupUserServiceImpl implements SignupUserService {
         String url = environment.getProperty("keycloak.server") + "/admin/realms/sci-tech/users";
         String username = environment.getProperty("keycloak.username").toString();
         String password = environment.getProperty("keycloak.password").toString();
+        String client_id = "admin-cli";
 
         try {
             ResponseEntity<String> authenticationResponse = loginUserService.generateToken(username, password);
             String token = authenticationResponse.getBody();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode;
-            String access_token;
+            String access_token = objectKey.getKey(token,"access_token");
 
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
-                try {
-                    jsonNode = objectMapper.readTree(token);
-                    access_token = jsonNode.get("access_token").asText();
-                } catch (JsonProcessingException e1) {
-                    access_token = "Unexpected error occurred";
-                }
-
+                
                 HttpHeaders headers = new HttpHeaders();
                 headers.set("Authorization", "Bearer " + access_token.toString());
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -78,31 +70,24 @@ public class SignupUserServiceImpl implements SignupUserService {
 
                 try {
                     ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, requestEntity,
-                            String.class);
+                    String.class);
+                    logoutUserService.endSession(access_token, client_id);
                     return responseEntity;
                 } catch (HttpClientErrorException e) {
-                    logoutUserService.logOutRequest(access_token);
+                    logoutUserService.endSession(access_token, client_id);
                     ErrorResponse error = new ErrorResponse(
-                            OffsetDateTime.now(),
-                            e.getStatusCode().toString(),
-                            e.toString(),
-                            "/api/keycloak-service/signup");
-                    return new ResponseEntity<>(error, e.getStatusCode());
-                }
-            } else {
-                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+                        OffsetDateTime.now(),
+                        e.getStatusCode().toString(),
+                        e.toString(),
+                        "/api/keycloak-service/signup");
+                        return new ResponseEntity<>(error, e.getStatusCode());
+                    }
+                } else {
+                    return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
             String responseBody = e.getResponseBodyAsString();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode;
-            String errorDescription;
-            try {
-                jsonNode = objectMapper.readTree(responseBody);
-                errorDescription = jsonNode.get("error").asText();
-            } catch (JsonProcessingException e1) {
-                errorDescription = "Unexpected error occurred";
-            }
+            String errorDescription = objectKey.getKey(responseBody, "error");
             ErrorResponse error = new ErrorResponse(
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
