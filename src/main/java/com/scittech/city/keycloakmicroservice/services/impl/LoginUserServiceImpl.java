@@ -31,7 +31,8 @@ public class LoginUserServiceImpl implements LogInUserService {
 
         // Create a MultiValueMap to hold the form data
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", environment.getProperty("keycloak.client_id").toString());
+        formData.add("client_id", "admin-cli");
+        // formData.add("client_id", environment.getProperty("keycloak.client_id").toString());
         formData.add("client_secret", environment.getProperty("keycloak.client_secret").toString());
         formData.add("grant_type", "password");
         formData.add("username", username.toString());
