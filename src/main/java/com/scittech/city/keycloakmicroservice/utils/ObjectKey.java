@@ -22,4 +22,16 @@ public class ObjectKey {
         return objKey;
     }
 
+    public String createObject(Object userData) {
+        ObjectMapper postData = new ObjectMapper();
+        String jsonBody;
+        try {
+            jsonBody = postData.writeValueAsString(userData);
+        } catch (Exception e) {
+            jsonBody = e.toString();
+        }
+        return jsonBody;
+
+    }
+
 }

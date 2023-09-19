@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
@@ -16,6 +18,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserTokenCredentialsEntity;
+import com.scittech.city.keycloakmicroservice.services.EditUserInfoService;
 import com.scittech.city.keycloakmicroservice.services.InspectTokenService;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
 import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
@@ -36,6 +39,8 @@ public class KeycloakController {
     private InspectTokenService inspectTokenService;
     @Autowired
     private SignupUserService signupUserService;
+    @Autowired
+    private EditUserInfoService editUserInfoService;
     @Autowired
     private Environment environment;
     @Autowired
@@ -132,6 +137,31 @@ public class KeycloakController {
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 String token = authenticationResponse.getBody();
                 return new ResponseEntity<>(token, HttpStatus.OK);
+            } else {
+                // Handle other responses if needed
+                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+
+            ErrorResponse error = new ErrorResponse(
+                    OffsetDateTime.now(),
+                    e.getStatusCode().toString(),
+                    "Unexpected error occurred",
+                    "/api/keycloak-service/logout");
+            return new ResponseEntity<>(error, e.getStatusCode());
+        }
+    }
+
+    @PutMapping("/edit-user")
+    public ResponseEntity<?> editUserInfo(@RequestBody Object userData, @RequestHeader("Authorization") String authorizationHeader) {
+
+        String token = authorizationHeader.replace("Bearer ", "");
+
+        try {
+            ResponseEntity<?> authenticationResponse = editUserInfoService.editUserInfo(userData, token);
+            if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
+                // String res = authenticationResponse.getBody();
+                return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
             } else {
                 // Handle other responses if needed
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
