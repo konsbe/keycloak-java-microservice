@@ -7,6 +7,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,10 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserTokenCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.services.EditUserInfoService;
+import com.scittech.city.keycloakmicroservice.services.GetUserInfoService;
 import com.scittech.city.keycloakmicroservice.services.InspectTokenService;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
 import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
@@ -41,6 +47,8 @@ public class KeycloakController {
     private SignupUserService signupUserService;
     @Autowired
     private EditUserInfoService editUserInfoService;
+    @Autowired
+    private GetUserInfoService userInfoService;
     @Autowired
     private Environment environment;
     @Autowired
@@ -162,6 +170,34 @@ public class KeycloakController {
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 // String res = authenticationResponse.getBody();
                 return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
+            } else {
+                // Handle other responses if needed
+                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+
+            ErrorResponse error = new ErrorResponse(
+                    OffsetDateTime.now(),
+                    e.getStatusCode().toString(),
+                    "Unexpected error occurred",
+                    "/api/keycloak-service/logout");
+            return new ResponseEntity<>(error, e.getStatusCode());
+        }
+    }
+
+    @GetMapping("/get-user-info")
+    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String authorizationHeader) throws JsonMappingException, JsonProcessingException {
+
+        String token = authorizationHeader.replace("Bearer ", "");
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            ResponseEntity<?> authenticationResponse = userInfoService.getUserInfo(token);
+            if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
+                String res = (String) authenticationResponse.getBody();
+                JsonNode jsonNode = objectMapper.readTree(res);
+
+                return new ResponseEntity<>(jsonNode, HttpStatus.OK);
             } else {
                 // Handle other responses if needed
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());

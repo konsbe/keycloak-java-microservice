@@ -13,13 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.scittech.city.keycloakmicroservice.services.EditUserInfoService;
+import com.scittech.city.keycloakmicroservice.services.GetUserInfoService;
 import com.scittech.city.keycloakmicroservice.utils.ErrorResponse;
 import com.scittech.city.keycloakmicroservice.utils.ObjectKey;
 import com.scittech.city.keycloakmicroservice.utils.TokenDecoder;
 
 @Service
-public class EditUserInfoServiceImpl implements EditUserInfoService {
+public class GetUserInfoServiceImpl implements GetUserInfoService {
 
     @Autowired
     private final RestTemplate restTemplate;
@@ -30,31 +30,30 @@ public class EditUserInfoServiceImpl implements EditUserInfoService {
     @Autowired
     public TokenDecoder tokenDecoder;
 
-    public EditUserInfoServiceImpl(RestTemplate restTemplate) {
+    public GetUserInfoServiceImpl(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     @Override
-    public ResponseEntity<?> editUserInfo(Object userData, String token) {
+    public ResponseEntity<?> getUserInfo(String token) {
 
         String tokenData = tokenDecoder.decodeJwt(token);
         String sub = objKey.getKey(tokenData, "sub");
         String url = environment.getProperty("keycloak.server") + "/admin/realms/"
                 + environment.getProperty("keycloak.realm")
                 + "/users/" + sub;
+        String jsonBody = "";
 
-        
         HttpHeaders headers = new HttpHeaders();
 
         String bearerToken = "Bearer " + token;
         headers.set("Authorization", bearerToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String jsonBody = objKey.createObject(userData);
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 
         try {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, requestEntity,
+            ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity,
                     String.class);
             return responseEntity;
         } catch (HttpClientErrorException e) {
@@ -67,5 +66,4 @@ public class EditUserInfoServiceImpl implements EditUserInfoService {
         }
 
     }
-
 }
