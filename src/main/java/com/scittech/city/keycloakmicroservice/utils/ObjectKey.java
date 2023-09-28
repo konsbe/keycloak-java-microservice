@@ -34,4 +34,18 @@ public class ObjectKey {
 
     }
 
+    public JsonNode createJSONObject(String data) {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JsonNode jsonNode;
+        try {
+            jsonNode = objectMapper.readTree(data);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            jsonNode = null;
+        }
+        return jsonNode;
+    }
+
 }

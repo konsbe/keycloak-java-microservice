@@ -1,9 +1,12 @@
 package com.scittech.city.keycloakmicroservice.controllers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,10 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserTokenCredentialsEntity;
@@ -58,23 +58,31 @@ public class KeycloakController {
     public ResponseEntity<?> createUser(@RequestBody UserEntity userData) {
         try {
             ResponseEntity<?> authenticationResponse = signupUserService.signupUser(userData);
-            if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
-                String token = authenticationResponse.getBody().toString();
-                return new ResponseEntity<>(token, HttpStatus.OK);
+            if (authenticationResponse.getStatusCode() == HttpStatus.OK
+                    || authenticationResponse.getStatusCode() == HttpStatus.CREATED) {
+                HttpHeaders headers = authenticationResponse.getHeaders();
+                String locationHeader = headers.getFirst("Location");
+                if (locationHeader != null) {
+                    try {
+                        URI locationUri = new URI(locationHeader);
+                        return new ResponseEntity<>(ResponseEntity.created(locationUri).build(), HttpStatus.CREATED);
+                    } catch (URISyntaxException e) {
+                        return new ResponseEntity<>(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(), HttpStatus.I_AM_A_TEAPOT);
+                    }
+                } else {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
             } else {
-                // Handle other responses if needed
-                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+                String res = (String) authenticationResponse.getBody();
+                return new ResponseEntity<>(res, authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
-            String responseBody = e.getResponseBodyAsString();
-            String errorDescription = objectKey.getKey(responseBody, "error_description");
-
             ErrorResponse error = new ErrorResponse(
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
-                    errorDescription.toString(),
+                    e.getResponseBodyAsString(),
                     "/api/keycloak-service/logout");
-            return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
 
@@ -82,31 +90,27 @@ public class KeycloakController {
     public ResponseEntity<?> getToken(@RequestBody UserLoginCredentialsEntity userLoginCredentials) {
         String username = userLoginCredentials.getUsername();
         String password = userLoginCredentials.getPassword();
+        JsonNode jsonNode;
         try {
             ResponseEntity<String> authenticationResponse = logInUserService.loginUserRequest(username, password);
 
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 String token = authenticationResponse.getBody();
-                return new ResponseEntity<>(token, HttpStatus.OK);
+                jsonNode = objectKey.createJSONObject(token);
+                return new ResponseEntity<>(jsonNode, HttpStatus.OK);
             } else {
-                // Handle other responses if needed
-                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+                String authError = authenticationResponse.getBody();
+                jsonNode = objectKey.createJSONObject(authError);
+                return new ResponseEntity<>(jsonNode, authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                // Handle 401 Unauthorized response here
-                ErrorResponse error = new ErrorResponse(
-                        OffsetDateTime.now(),
-                        HttpStatus.UNAUTHORIZED.toString(),
-                        "Unauthorized",
-                        "/api/keycloak-service/signin");
-                return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
-            } else {
-                // Handle other exceptions or return an appropriate response
-                return new ResponseEntity<>("Unexpected error occurred", e.getStatusCode());
-                // return new ResponseEntity<>("Unexpected error occurred",
-                // HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            ErrorResponse error = new ErrorResponse(
+                    OffsetDateTime.now(),
+                    e.getStatusCode().toString(),
+                    e.getResponseBodyAsString(),
+                    "/api/keycloak-service/logout");
+
+            return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
 
@@ -116,23 +120,21 @@ public class KeycloakController {
             ResponseEntity<String> authenticationResponse = inspectTokenService
                     .inspectToken(access_token.getAccess_token());
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
-                String token = authenticationResponse.getBody();
-                return new ResponseEntity<>(token, HttpStatus.OK);
+                String res = authenticationResponse.getBody();
+                JsonNode jsonNode = objectKey.createJSONObject(res);
+                ;
+                return new ResponseEntity<>(jsonNode, HttpStatus.OK);
             } else {
-                // Handle other responses if needed
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
-            String responseBody = e.getResponseBodyAsString();
-
-            String errorDescription = objectKey.getKey(responseBody, "error_description");
-
             ErrorResponse error = new ErrorResponse(
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
-                    errorDescription.toString(),
+                    e.getResponseBodyAsString(),
                     "/api/keycloak-service/logout");
-            return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+
+            return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
 
@@ -143,25 +145,28 @@ public class KeycloakController {
         try {
             ResponseEntity<String> authenticationResponse = logOutUserService.endSession(jwtToken, client_id);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
-                String token = authenticationResponse.getBody();
-                return new ResponseEntity<>(token, HttpStatus.OK);
+                String res = authenticationResponse.getBody();
+                JsonNode jsonNode = objectKey.createJSONObject(res);
+                ;
+                return new ResponseEntity<>(jsonNode, HttpStatus.OK);
             } else {
                 // Handle other responses if needed
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
-
             ErrorResponse error = new ErrorResponse(
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
-                    "Unexpected error occurred",
+                    e.getResponseBodyAsString(),
                     "/api/keycloak-service/logout");
+
             return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
 
     @PutMapping("/edit-user")
-    public ResponseEntity<?> editUserInfo(@RequestBody Object userData, @RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<?> editUserInfo(@RequestBody Object userData,
+            @RequestHeader("Authorization") String authorizationHeader) {
 
         String token = authorizationHeader.replace("Bearer ", "");
 
@@ -171,7 +176,6 @@ public class KeycloakController {
                 // String res = authenticationResponse.getBody();
                 return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
             } else {
-                // Handle other responses if needed
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
@@ -186,20 +190,18 @@ public class KeycloakController {
     }
 
     @GetMapping("/get-user-info")
-    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String authorizationHeader) throws JsonMappingException, JsonProcessingException {
+    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String authorizationHeader) {
 
         String token = authorizationHeader.replace("Bearer ", "");
-        ObjectMapper objectMapper = new ObjectMapper();
 
         try {
             ResponseEntity<?> authenticationResponse = userInfoService.getUserInfo(token);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 String res = (String) authenticationResponse.getBody();
-                JsonNode jsonNode = objectMapper.readTree(res);
+                JsonNode jsonNode = objectKey.createJSONObject(res);
 
                 return new ResponseEntity<>(jsonNode, HttpStatus.OK);
             } else {
-                // Handle other responses if needed
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
