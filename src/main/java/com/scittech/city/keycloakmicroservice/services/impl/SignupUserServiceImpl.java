@@ -42,7 +42,8 @@ public class SignupUserServiceImpl implements SignupUserService {
     @Override
     public ResponseEntity<?> signupUser(UserEntity userData) {
 
-        String url = environment.getProperty("keycloak.server") + "/admin/realms/sci-tech/users";
+        String url = environment.getProperty("keycloak.server") + "/admin/realms/"
+                + environment.getProperty("keycloak.realm") + "/users";
         String username = environment.getProperty("keycloak.username").toString();
         String password = environment.getProperty("keycloak.password").toString();
         String client_id = "admin-cli";
@@ -50,10 +51,10 @@ public class SignupUserServiceImpl implements SignupUserService {
         try {
             ResponseEntity<String> authenticationResponse = loginUserService.generateToken(username, password);
             String token = authenticationResponse.getBody();
-            String access_token = objectKey.getKey(token,"access_token");
+            String access_token = objectKey.getKey(token, "access_token");
 
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
-                
+
                 HttpHeaders headers = new HttpHeaders();
                 headers.set("Authorization", "Bearer " + access_token.toString());
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -70,20 +71,20 @@ public class SignupUserServiceImpl implements SignupUserService {
 
                 try {
                     ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, requestEntity,
-                    String.class);
+                            String.class);
                     logoutUserService.endSession(access_token, client_id);
                     return responseEntity;
                 } catch (HttpClientErrorException e) {
                     logoutUserService.endSession(access_token, client_id);
                     ErrorResponse error = new ErrorResponse(
-                        OffsetDateTime.now(),
-                        e.getStatusCode().toString(),
-                        e.toString(),
-                        "/api/keycloak-service/signup");
-                        return new ResponseEntity<>(error, e.getStatusCode());
-                    }
-                } else {
-                    return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+                            OffsetDateTime.now(),
+                            e.getStatusCode().toString(),
+                            e.toString(),
+                            "/api/keycloak-service/signup");
+                    return new ResponseEntity<>(error, e.getStatusCode());
+                }
+            } else {
+                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
             String responseBody = e.getResponseBodyAsString();

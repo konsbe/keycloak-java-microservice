@@ -67,14 +67,27 @@ public class KeycloakController {
                         URI locationUri = new URI(locationHeader);
                         return new ResponseEntity<>(ResponseEntity.created(locationUri).build(), HttpStatus.CREATED);
                     } catch (URISyntaxException e) {
-                        return new ResponseEntity<>(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(), HttpStatus.I_AM_A_TEAPOT);
+                        return new ResponseEntity<>(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(),
+                                HttpStatus.I_AM_A_TEAPOT);
                     }
                 } else {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             } else {
-                String res = (String) authenticationResponse.getBody();
-                return new ResponseEntity<>(res, authenticationResponse.getStatusCode());
+                @SuppressWarnings("null")
+                JsonNode res = authenticationResponse.getBody() != null ? objectKey.createJSONObject(authenticationResponse.getBody().toString()) : null;
+                if (res != null) {
+                    if (res != null)
+                        System.out.println("res: " + res.toString());
+                    return new ResponseEntity<>(res, authenticationResponse.getStatusCode());
+                } else {
+                    ErrorResponse error = new ErrorResponse(
+                            OffsetDateTime.now(),
+                            "418",
+                            "drink a coffee",
+                            "/api/keycloak-service/logout");
+                    return new ResponseEntity<>(error, HttpStatus.I_AM_A_TEAPOT);
+                }
             }
         } catch (HttpClientErrorException e) {
             ErrorResponse error = new ErrorResponse(
@@ -140,10 +153,11 @@ public class KeycloakController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> destroyToken(@RequestBody UserTokenCredentialsEntity access_token) {
+        @SuppressWarnings("null")
         String client_id = environment.getProperty("keycloak.client_id").toString();
         String jwtToken = access_token.getAccess_token().toString();
         try {
-            ResponseEntity<String> authenticationResponse = logOutUserService.endSession(jwtToken, client_id);
+            ResponseEntity<String> authenticationResponse = logOutUserService.logOutRequest(jwtToken, client_id);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 String res = authenticationResponse.getBody();
                 JsonNode jsonNode = objectKey.createJSONObject(res);
