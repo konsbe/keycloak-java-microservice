@@ -1,5 +1,6 @@
 package com.scittech.city.keycloakmicroservice.services.impl;
 
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,18 +15,24 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scittech.city.keycloakmicroservice.entities.KeycloakEntity;
+import com.scittech.city.keycloakmicroservice.entities.SciUserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
+import com.scittech.city.keycloakmicroservice.repository.UserRepository;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
 import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
 import com.scittech.city.keycloakmicroservice.services.SignupUserService;
 import com.scittech.city.keycloakmicroservice.utils.ErrorResponse;
 import com.scittech.city.keycloakmicroservice.utils.ObjectKey;
 
+
 @Service
 public class SignupUserServiceImpl implements SignupUserService {
 
     @Autowired
     private final RestTemplate restTemplate;
+    @Autowired
+    private final UserRepository userRepository;
     @Autowired
     private Environment environment;
     @Autowired
@@ -35,12 +42,13 @@ public class SignupUserServiceImpl implements SignupUserService {
     @Autowired
     private ObjectKey objectKey;
 
-    public SignupUserServiceImpl(RestTemplate restTemplate) {
+    public SignupUserServiceImpl(RestTemplate restTemplate, UserRepository userRepository) {
         this.restTemplate = restTemplate;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public ResponseEntity<?> signupUser(UserEntity userData) {
+    public ResponseEntity<?> signupUser(KeycloakEntity userData) {
 
         String url = environment.getProperty("keycloak.server") + "/admin/realms/"
                 + environment.getProperty("keycloak.realm") + "/users";
@@ -63,8 +71,9 @@ public class SignupUserServiceImpl implements SignupUserService {
 
                 ObjectMapper postData = new ObjectMapper();
                 String jsonBody;
+                UserEntity user_ent = new UserEntity(userData);
                 try {
-                    jsonBody = postData.writeValueAsString(userData);
+                    jsonBody = postData.writeValueAsString(user_ent);
                 } catch (Exception e) {
                     jsonBody = e.toString();
                 }
@@ -72,8 +81,12 @@ public class SignupUserServiceImpl implements SignupUserService {
                 HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 
                 try {
+                    // create user in keycloak
                     ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, requestEntity,
                             String.class);
+                    SciUserEntity sci_user_ent = new SciUserEntity(System.currentTimeMillis(), userData.getFirstName(), userData.getEmail(), userData.getProfile_picture(),  new Timestamp(System.currentTimeMillis()));
+                    // save user information in our database
+                    userRepository.save(sci_user_ent);
                     logoutUserService.endSession(access_token, client_id);
                     return responseEntity;
                 } catch (HttpClientErrorException e) {
