@@ -44,7 +44,9 @@ public class SignupUserServiceImpl implements SignupUserService {
 
         String url = environment.getProperty("keycloak.server") + "/admin/realms/"
                 + environment.getProperty("keycloak.realm") + "/users";
+        @SuppressWarnings("null")
         String username = environment.getProperty("keycloak.username").toString();
+        @SuppressWarnings("null")
         String password = environment.getProperty("keycloak.password").toString();
         String client_id = "admin-cli";
 

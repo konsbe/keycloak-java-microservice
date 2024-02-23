@@ -53,6 +53,7 @@ public class GetUserInfoServiceImpl implements GetUserInfoService {
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 
         try {
+            @SuppressWarnings("null")
             ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity,
                     String.class);
             return responseEntity;

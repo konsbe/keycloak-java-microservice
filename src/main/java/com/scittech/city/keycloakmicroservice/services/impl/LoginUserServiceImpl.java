@@ -24,6 +24,7 @@ public class LoginUserServiceImpl implements LogInUserService {
         this.restTemplate = restTemplate;
     }
 
+    @SuppressWarnings("null")
     @Override
     public ResponseEntity<String> loginUserRequest(String username,String password) {
         // Define the request URL
@@ -51,6 +52,7 @@ public class LoginUserServiceImpl implements LogInUserService {
         return responseEntity;
     }
 
+    @SuppressWarnings("null")
     @Override
     public ResponseEntity<String> generateToken(String username,String password) {
         // Define the request URL
