@@ -33,4 +33,11 @@ public class SciUserEntity {
     
     @Column(name = "created_at")
     private Timestamp created_at;
+
+    public SciUserEntity(UserEntity userEntity) {
+        this.username = userEntity.getUsername();
+        this.email = userEntity.getEmail();
+        this.picture = userEntity.getPicture();
+        this.created_at = new Timestamp(System.currentTimeMillis());
+    };
 }

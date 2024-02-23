@@ -56,10 +56,13 @@ public class LogoutUserServiceImpl implements LogoutUserService {
 
         return responseEntity;
     }
-
+        
     @Override
     public ResponseEntity<String> endSession(String userToken, String client_id) {
-
+        /**
+         * this method is for destroying the token from a client_user that 
+         * is in need in order to do some request
+         */
         String tokenData = tokenDecoder.decodeJwt(userToken);
         String sub = objKey.getKey(tokenData, "sub");
         String url = environment.getProperty("keycloak.server") +"/admin/realms/" + environment.getProperty("keycloak.realm")

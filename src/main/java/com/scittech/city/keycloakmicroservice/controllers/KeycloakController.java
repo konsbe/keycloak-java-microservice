@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.scittech.city.keycloakmicroservice.entities.KeycloakEntity;
+import com.scittech.city.keycloakmicroservice.entities.SciUserEntity;
+import com.scittech.city.keycloakmicroservice.entities.UserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserTokenCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.services.EditUserInfoService;
@@ -55,7 +56,7 @@ public class KeycloakController {
     private ObjectKey objectKey;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> createUser(@RequestBody KeycloakEntity userData) {
+    public ResponseEntity<?> createUser(@RequestBody UserEntity userData) {
         try {
             ResponseEntity<?> authenticationResponse = signupUserService.signupUser(userData);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK

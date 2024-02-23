@@ -1,6 +1,5 @@
 package com.scittech.city.keycloakmicroservice.services.impl;
 
-import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,14 +46,13 @@ public class SignupUserServiceImpl implements SignupUserService {
         this.userRepository = userRepository;
     }
 
+    @SuppressWarnings("null")
     @Override
-    public ResponseEntity<?> signupUser(KeycloakEntity userData) {
+    public ResponseEntity<?> signupUser(UserEntity userData) {
 
         String url = environment.getProperty("keycloak.server") + "/admin/realms/"
                 + environment.getProperty("keycloak.realm") + "/users";
-        @SuppressWarnings("null")
         String username = environment.getProperty("keycloak.username").toString();
-        @SuppressWarnings("null")
         String password = environment.getProperty("keycloak.password").toString();
         String client_id = "admin-cli";
 
@@ -71,9 +69,9 @@ public class SignupUserServiceImpl implements SignupUserService {
 
                 ObjectMapper postData = new ObjectMapper();
                 String jsonBody;
-                UserEntity user_ent = new UserEntity(userData);
+                KeycloakEntity keycloak_user_ent = new KeycloakEntity(userData);
                 try {
-                    jsonBody = postData.writeValueAsString(user_ent);
+                    jsonBody = postData.writeValueAsString(keycloak_user_ent);
                 } catch (Exception e) {
                     jsonBody = e.toString();
                 }
@@ -84,8 +82,8 @@ public class SignupUserServiceImpl implements SignupUserService {
                     // create user in keycloak
                     ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, requestEntity,
                             String.class);
-                    SciUserEntity sci_user_ent = new SciUserEntity(System.currentTimeMillis(), userData.getFirstName(), userData.getEmail(), userData.getProfile_picture(),  new Timestamp(System.currentTimeMillis()));
                     // save user information in our database
+                    SciUserEntity sci_user_ent = new SciUserEntity(userData);
                     userRepository.save(sci_user_ent);
                     logoutUserService.endSession(access_token, client_id);
                     return responseEntity;
