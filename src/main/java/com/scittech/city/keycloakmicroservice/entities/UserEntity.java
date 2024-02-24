@@ -23,6 +23,7 @@ public class UserEntity extends SciUserEntity {
         this.username = userEntity.getUsername();
         this.email = userEntity.getEmail();
         this.picture =  pic.getDecodedBytes();
+        this.image_type =  pic.getImageTypeFormat();
         this.created_at = new Timestamp(System.currentTimeMillis());
         this.password = userEntity.getPassword();
     };

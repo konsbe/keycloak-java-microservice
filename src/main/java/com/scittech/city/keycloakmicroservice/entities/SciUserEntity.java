@@ -3,6 +3,7 @@ package com.scittech.city.keycloakmicroservice.entities;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ import java.sql.Timestamp;
 public class SciUserEntity {
     
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     protected Long user_id;
     
@@ -31,6 +32,9 @@ public class SciUserEntity {
     
     @Column(name = "picture")
     protected byte[] picture;
+
+    @Column(name = "image_type ")
+    protected String image_type ;
     
     @Column(name = "created_at")
     protected Timestamp created_at;
@@ -39,6 +43,7 @@ public class SciUserEntity {
         this.username = userEntity.getUsername();
         this.email = userEntity.getEmail();
         this.picture =  userEntity.getPicture();
+        this.image_type  =  userEntity.getImage_type();
         this.created_at = new Timestamp(System.currentTimeMillis());
     };
 }
