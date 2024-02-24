@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.sql.Timestamp;
 
+
 @Entity
 @Table(name = "sci_users")
 @Data
@@ -20,24 +21,24 @@ public class SciUserEntity {
     @Id
     @GeneratedValue
     @Column(name = "user_id")
-    private Long user_id;
+    protected Long user_id;
     
     @Column(name = "username")
-    private String username;
+	protected String username;
     
     @Column(name = "email")
-    private String email;
+    protected String email;
     
     @Column(name = "picture")
-    private String picture;
+    protected byte[] picture;
     
     @Column(name = "created_at")
-    private Timestamp created_at;
+    protected Timestamp created_at;
 
     public SciUserEntity(UserEntity userEntity) {
         this.username = userEntity.getUsername();
         this.email = userEntity.getEmail();
-        this.picture = userEntity.getPicture();
+        this.picture =  userEntity.getPicture();
         this.created_at = new Timestamp(System.currentTimeMillis());
     };
 }
