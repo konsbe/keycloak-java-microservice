@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 import com.scittech.city.keycloakmicroservice.entities.SciUserEntity;
 
 @Repository
-public interface UserRepository extends JpaRepository<SciUserEntity,Long>{};
+public interface UserRepository extends JpaRepository<SciUserEntity,Long>{
+    SciUserEntity findByEmail(String email);
+};
