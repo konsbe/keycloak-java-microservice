@@ -67,6 +67,7 @@ public class LoginUserServiceImpl implements LogInUserService {
             // the original responseEntity
             ResponseEntity<String> combinedResponseEntity = new ResponseEntity<>(combinedResponse,
                     responseEntity.getStatusCode());
+
             return combinedResponseEntity;
         }
         return responseEntity;

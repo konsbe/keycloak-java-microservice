@@ -55,6 +55,7 @@ public class KeycloakController {
     @Autowired
     private ObjectKey objectKey;
 
+    @SuppressWarnings("unused")
     @PostMapping("/signup")
     public ResponseEntity<?> createUser(@RequestBody CreateUserJSON userData) {
         UserEntity userEntity = new UserEntity(userData);
@@ -77,11 +78,12 @@ public class KeycloakController {
                 }
             } else {
                 @SuppressWarnings("null")
-                JsonNode res = authenticationResponse.getBody() != null ? objectKey.createJSONObject(authenticationResponse.getBody().toString()) : null;
+                JsonNode res = authenticationResponse.getBody() != null
+                        ? objectKey.createJSONObject(authenticationResponse.getBody().toString())
+                        : null;
                 if (res != null) {
                     if (res != null)
-                        System.out.println("res: " + res.toString());
-                    return new ResponseEntity<>(res, authenticationResponse.getStatusCode());
+                        return new ResponseEntity<>(res, authenticationResponse.getStatusCode());
                 } else {
                     ErrorResponse error = new ErrorResponse(
                             OffsetDateTime.now(),
@@ -99,6 +101,8 @@ public class KeycloakController {
                     "/api/keycloak-service/logout");
             return new ResponseEntity<>(error, e.getStatusCode());
         }
+        return new ResponseEntity<>(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(),
+                HttpStatus.I_AM_A_TEAPOT);
     }
 
     @PostMapping("/signin")

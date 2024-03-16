@@ -27,7 +27,6 @@ public class Base64Decoder {
 
         // Extract the base64-encoded data from the second part
         String base64Data = parts[1];
-        System.out.println("base64Data: " + base64Data);
         // Decode the base64 data
         this.imageTypeFormat = parts[0];
         this.decodedBytes = Base64.getDecoder().decode(base64Data);
