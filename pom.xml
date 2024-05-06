@@ -56,6 +56,26 @@
 			<artifactId>jjwt</artifactId>
 			<version>0.9.1</version> <!-- Use the latest version -->
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.mindrot/jbcrypt -->
+		<dependency>
+			<groupId>org.mindrot</groupId>
+			<artifactId>jbcrypt</artifactId>
+			<version>0.4</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-amqp -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+			<version>3.2.5</version>
+		</dependency>
+								
+		<!-- https://mvnrepository.com/artifact/org.springframework.amqp/spring-amqp -->
+		<dependency>
+			<groupId>org.springframework.amqp</groupId>
+			<artifactId>spring-amqp</artifactId>
+			<version>3.1.4</version>
+		</dependency>
+		
 		
 	</dependencies>
 

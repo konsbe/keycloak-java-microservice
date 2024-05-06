@@ -62,7 +62,7 @@ public class LoginUserServiceImpl implements LogInUserService {
             String jsonSciUserEntity = objKey.createObject(sciUserEntity);
             // Combine sciUserEntity response with the original responseEntity
             String combinedResponse = String.format("[%s,%s]", responseEntity.getBody(), jsonSciUserEntity);
-
+            
             // Create a new ResponseEntity with the combined response and the same status as
             // the original responseEntity
             ResponseEntity<String> combinedResponseEntity = new ResponseEntity<>(combinedResponse,

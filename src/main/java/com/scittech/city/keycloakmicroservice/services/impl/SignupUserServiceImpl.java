@@ -2,7 +2,11 @@ package com.scittech.city.keycloakmicroservice.services.impl;
 
 import java.time.OffsetDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scittech.city.keycloakmicroservice.entities.KeycloakEntity;
 import com.scittech.city.keycloakmicroservice.entities.SciUserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
-import com.scittech.city.keycloakmicroservice.repository.UserRepository;
 import com.scittech.city.keycloakmicroservice.services.LogInUserService;
 import com.scittech.city.keycloakmicroservice.services.LogoutUserService;
 import com.scittech.city.keycloakmicroservice.services.SignupUserService;
@@ -28,10 +31,16 @@ import com.scittech.city.keycloakmicroservice.utils.ObjectKey;
 @Service
 public class SignupUserServiceImpl implements SignupUserService {
 
+
+    @Value("${rabbitmq.topic.exchange.name}")
+    private String topicExchangeName;
+    @Value("${rabbitmq.queue.route.key}")
+    private String routingKey;
+
     @Autowired
     private final RestTemplate restTemplate;
-    @Autowired
-    private final UserRepository userRepository;
+    // @Autowired
+    // private final UserRepository userRepository;
     @Autowired
     private Environment environment;
     @Autowired
@@ -41,9 +50,13 @@ public class SignupUserServiceImpl implements SignupUserService {
     @Autowired
     private ObjectKey objectKey;
 
-    public SignupUserServiceImpl(RestTemplate restTemplate, UserRepository userRepository) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SignupUserServiceImpl.class);
+
+    private RabbitTemplate rabbitTemplate;
+
+    public SignupUserServiceImpl(RestTemplate restTemplate, RabbitTemplate rabbitTemplate) {
         this.restTemplate = restTemplate;
-        this.userRepository = userRepository;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @SuppressWarnings("null")
@@ -84,7 +97,12 @@ public class SignupUserServiceImpl implements SignupUserService {
                             String.class);
                     // save user information in our database
                     SciUserEntity sci_user_ent = new SciUserEntity(userData);
-                    userRepository.save(sci_user_ent);
+                    // userRepository.save(sci_user_ent);
+                    String sci_user_parString = objectKey.createObject(sci_user_ent);
+                    LOGGER.info("User send --> {}", sci_user_parString);
+                    rabbitTemplate.convertAndSend(topicExchangeName, routingKey, userData);
+
+                    // restTemplate.postForLocation("http://localhost:8081/user-info", sci_user_ent);
                     logoutUserService.endSession(access_token, client_id);
                     return responseEntity;
                 } catch (HttpClientErrorException e) {
