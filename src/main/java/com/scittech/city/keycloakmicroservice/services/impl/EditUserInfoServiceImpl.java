@@ -54,7 +54,6 @@ public class EditUserInfoServiceImpl implements EditUserInfoService {
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
 
         try {
-            @SuppressWarnings("null")
             ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, requestEntity,
                     String.class);
             return responseEntity;

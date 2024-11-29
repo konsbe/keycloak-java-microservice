@@ -89,7 +89,7 @@ public class KeycloakController {
                             OffsetDateTime.now(),
                             "418",
                             "drink a coffee",
-                            "/api/keycloak-service/logout");
+                            "/api/keycloak-service/signup");
                     return new ResponseEntity<>(error, HttpStatus.I_AM_A_TEAPOT);
                 }
             }
@@ -98,7 +98,7 @@ public class KeycloakController {
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
                     e.getResponseBodyAsString(),
-                    "/api/keycloak-service/logout");
+                    "/api/keycloak-service/signup");
             return new ResponseEntity<>(error, e.getStatusCode());
         }
         return new ResponseEntity<>(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(),
@@ -127,7 +127,7 @@ public class KeycloakController {
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
                     e.getResponseBodyAsString(),
-                    "/api/keycloak-service/logout");
+                    "/api/keycloak-service/signin");
 
             return new ResponseEntity<>(error, e.getStatusCode());
         }
@@ -151,7 +151,7 @@ public class KeycloakController {
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
                     e.getResponseBodyAsString(),
-                    "/api/keycloak-service/logout");
+                    "/api/keycloak-service/inspectTokenService");
 
             return new ResponseEntity<>(error, e.getStatusCode());
         }
@@ -204,7 +204,7 @@ public class KeycloakController {
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
                     "Unexpected error occurred",
-                    "/api/keycloak-service/logout");
+                    "/api/keycloak-service/edit-user-info");
             return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
@@ -230,7 +230,7 @@ public class KeycloakController {
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
                     "Unexpected error occurred",
-                    "/api/keycloak-service/logout");
+                    "/api/keycloak-service/get-user-info");
             return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
