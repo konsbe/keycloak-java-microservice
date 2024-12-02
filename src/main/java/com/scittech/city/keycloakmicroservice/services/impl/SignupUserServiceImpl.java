@@ -103,7 +103,7 @@ public class SignupUserServiceImpl implements SignupUserService {
                     // userRepository.save(sci_user_ent);
                     String sci_user_parString = objectKey.createObject(sci_user_ent);
                     LOGGER.info("User send --> {}", sci_user_parString);
-                    LOGGER.info("responseEntity --> {}", responseEntity);
+                    // LOGGER.info("responseEntity --> {}", responseEntity);
                     rabbitTemplate.convertAndSend(topicExchangeName, routingKey, userData);
 
                     // restTemplate.postForLocation("http://localhost:8081/user-info", sci_user_ent);

@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.scittech.city.keycloakmicroservice.entities.CreateUserJSON;
@@ -55,12 +58,17 @@ public class KeycloakController {
     @Autowired
     private ObjectKey objectKey;
 
-    @SuppressWarnings("unused")
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeycloakController.class);
+
+    @SuppressWarnings({ "unused", "null" })
     @PostMapping("/signup")
     public ResponseEntity<?> createUser(@RequestBody CreateUserJSON userData) {
         UserEntity userEntity = new UserEntity(userData);
+        // LOGGER.info("createUser --> {}",objectKey.createObject(userData));
+
         try {
             ResponseEntity<?> authenticationResponse = signupUserService.signupUser(userEntity);
+
             if (authenticationResponse.getStatusCode() == HttpStatus.OK
                     || authenticationResponse.getStatusCode() == HttpStatus.CREATED) {
                 HttpHeaders headers = authenticationResponse.getHeaders();
@@ -77,11 +85,13 @@ public class KeycloakController {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             } else {
+                
                 @SuppressWarnings("null")
                 JsonNode res = authenticationResponse.getBody() != null
-                        ? objectKey.createJSONObject(authenticationResponse.getBody().toString())
-                        : null;
+                ? objectKey.createJSONObject(authenticationResponse.getBody().toString())
+                : null;
                 if (res != null) {
+                    LOGGER.info("UsauthenticationResponseer send --> {}", authenticationResponse.getBody().toString());
                     if (res != null)
                         return new ResponseEntity<>(res, authenticationResponse.getStatusCode());
                 } else {

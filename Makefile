@@ -9,9 +9,9 @@ build-img:
 
 # Run the Docker container locally
 run:
-	sudo docker run -it -p 8082:8082 --network host sci-tech-city-keycloak-microservice:17-jdk-alpine
+	sudo docker run --name sci_tech_city_microservice -it -p 8082:8082 --network host sci-tech-city-keycloak-microservice:17-jdk-alpine
 
 # Stop and remove the Docker container if it's already running
 clean:
-	docker stop java-rest || true
-	docker rm java-rest || true
+	docker stop sci_tech_city_microservice || true
+	docker rm sci_tech_city_microservice || true
