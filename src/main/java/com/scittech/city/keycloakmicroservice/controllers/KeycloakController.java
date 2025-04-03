@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,6 +28,7 @@ import com.scittech.city.keycloakmicroservice.entities.CreateUserJSON;
 import com.scittech.city.keycloakmicroservice.entities.UserEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserLoginCredentialsEntity;
 import com.scittech.city.keycloakmicroservice.entities.UserTokenCredentialsEntity;
+import com.scittech.city.keycloakmicroservice.services.DeleteUserService;
 import com.scittech.city.keycloakmicroservice.services.EditUserInfoService;
 import com.scittech.city.keycloakmicroservice.services.GetUserInfoService;
 import com.scittech.city.keycloakmicroservice.services.InspectTokenService;
@@ -53,6 +55,8 @@ public class KeycloakController {
     private EditUserInfoService editUserInfoService;
     @Autowired
     private GetUserInfoService userInfoService;
+    @Autowired
+    private DeleteUserService deleteUserService;
     @Autowired
     private Environment environment;
     @Autowired
@@ -193,18 +197,48 @@ public class KeycloakController {
             return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
-
     @PutMapping("/edit-user")
     public ResponseEntity<?> editUserInfo(@RequestBody Object userData,
-            @RequestHeader("Authorization") String authorizationHeader) {
+                                          @RequestHeader("Authorization") String authorizationHeader) {
+        // Log the received Authorization header
+        LOGGER.debug("Authorization Header: {}", authorizationHeader);
+    
+        // Extract Bearer token
+        String token = authorizationHeader.replace("Bearer ", "");
+        LOGGER.debug("Extracted Token: {}", token);
+    
+        // Use the token in your service method
+        try {
+            ResponseEntity<?> authenticationResponse = editUserInfoService.editUserInfo(userData, token);
+            if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
+                return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+            ErrorResponse error = new ErrorResponse(
+                OffsetDateTime.now(),
+                e.getStatusCode().toString(),
+                "Unexpected error occurred",
+                "/api/keycloak-service/edit-user-info"
+            );
+            return new ResponseEntity<>(error, e.getStatusCode());
+        }
+    }
+    
+
+    @GetMapping("/get-user-info")
+    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String authorizationHeader) {
 
         String token = authorizationHeader.replace("Bearer ", "");
 
         try {
-            ResponseEntity<?> authenticationResponse = editUserInfoService.editUserInfo(userData, token);
+            ResponseEntity<?> authenticationResponse = userInfoService.getUserInfo(token);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
-                // String res = authenticationResponse.getBody();
-                return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
+                String res = (String) authenticationResponse.getBody();
+                JsonNode jsonNode = objectKey.createJSONObject(res);
+
+                return new ResponseEntity<>(jsonNode, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(authenticationResponse.getBody(), authenticationResponse.getStatusCode());
             }
@@ -214,18 +248,17 @@ public class KeycloakController {
                     OffsetDateTime.now(),
                     e.getStatusCode().toString(),
                     "Unexpected error occurred",
-                    "/api/keycloak-service/edit-user-info");
+                    "/api/keycloak-service/get-user-info");
             return new ResponseEntity<>(error, e.getStatusCode());
         }
     }
-
-    @GetMapping("/get-user-info")
-    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String authorizationHeader) {
-
-        String token = authorizationHeader.replace("Bearer ", "");
+    @DeleteMapping("/delete-user")
+    public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authorizationHeader) {
 
         try {
-            ResponseEntity<?> authenticationResponse = userInfoService.getUserInfo(token);
+            String token = authorizationHeader.replace("Bearer ", "");
+
+            ResponseEntity<?> authenticationResponse = deleteUserService.deleteUser(token);
             if (authenticationResponse.getStatusCode() == HttpStatus.OK) {
                 String res = (String) authenticationResponse.getBody();
                 JsonNode jsonNode = objectKey.createJSONObject(res);

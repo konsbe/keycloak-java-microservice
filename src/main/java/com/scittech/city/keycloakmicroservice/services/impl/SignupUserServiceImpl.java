@@ -73,7 +73,6 @@ public class SignupUserServiceImpl implements SignupUserService {
 
         try {
             ResponseEntity<String> authenticationResponse = loginUserService.generateToken(username, password);
-            // LOGGER.info("authenticationResponse: {}", authenticationResponse.toString());
             String token = authenticationResponse.getBody();
             String access_token = objectKey.getKey(token, "access_token");
 
@@ -103,7 +102,6 @@ public class SignupUserServiceImpl implements SignupUserService {
                     // userRepository.save(sci_user_ent);
                     String sci_user_parString = objectKey.createObject(sci_user_ent);
                     LOGGER.info("User send --> {}", sci_user_parString);
-                    // LOGGER.info("responseEntity --> {}", responseEntity);
                     rabbitTemplate.convertAndSend(topicExchangeName, routingKey, userData);
 
                     // restTemplate.postForLocation("http://localhost:8081/user-info", sci_user_ent);
